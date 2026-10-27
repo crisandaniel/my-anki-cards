@@ -1,0 +1,6 @@
+.vscode
+.DS_Store
+.ankiops.db
+.ankiops.db-shm
+.ankiops.db-wal
+/collab/
