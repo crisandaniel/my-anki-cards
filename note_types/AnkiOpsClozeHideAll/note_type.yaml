@@ -1,0 +1,22 @@
+is_cloze: true
+styling:
+  - ../AnkiOpsStyling.css
+  - ./ClozeHideAllStyling.css
+  - ../SyntaxHighlighting.css
+templates:
+  - name: Cloze Hide All
+    front: Front.template.anki
+    back: Back.template.anki
+fields:
+  - name: Text
+    label: "THA:"
+    identifying: true
+  - name: Extra
+    label: "E:"
+    identifying: false
+  - name: More
+    label: "M:"
+    identifying: false
+  - name: AI Notes
+    label: "AI:"
+    identifying: false

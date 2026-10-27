@@ -1,0 +1,49 @@
+is_choice: true
+styling:
+  - ../AnkiOpsStyling.css
+  - ./ChoiceStyling.css
+  - ../SyntaxHighlighting.css
+templates:
+  - name: Card 1
+    front: Front.template.anki
+    back: Back.template.anki
+fields:
+  - name: Question
+    label: "Q:"
+    identifying: true
+  - name: Choice 1
+    label: "C1:"
+    identifying: true
+  - name: Choice 2
+    label: "C2:"
+    identifying: true
+  - name: Choice 3
+    label: "C3:"
+    identifying: true
+  - name: Choice 4
+    label: "C4:"
+    identifying: true
+  - name: Choice 5
+    label: "C5:"
+    identifying: true
+  - name: Choice 6
+    label: "C6:"
+    identifying: true
+  - name: Choice 7
+    label: "C7:"
+    identifying: true
+  - name: Choice 8
+    label: "C8:"
+    identifying: true
+  - name: Answer
+    label: "A:"
+    identifying: true
+  - name: Extra
+    label: "E:"
+    identifying: false
+  - name: More
+    label: "M:"
+    identifying: false
+  - name: AI Notes
+    label: "AI:"
+    identifying: false

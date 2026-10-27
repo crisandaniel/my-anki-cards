@@ -1,0 +1,23 @@
+styling:
+  - ../AnkiOpsStyling.css
+  - ../SyntaxHighlighting.css
+templates:
+  - name: Card 1
+    front: Front.template.anki
+    back: Back.template.anki
+fields:
+  - name: Question
+    label: "Q:"
+    identifying: true
+  - name: Answer
+    label: "A:"
+    identifying: true
+  - name: Extra
+    label: "E:"
+    identifying: false
+  - name: More
+    label: "M:"
+    identifying: false
+  - name: AI Notes
+    label: "AI:"
+    identifying: false

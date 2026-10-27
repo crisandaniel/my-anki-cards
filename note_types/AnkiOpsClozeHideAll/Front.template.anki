@@ -1,0 +1,150 @@
+<!-- Anki renders the active cloze here; we use this as a fallback if needed -->
+<div id="cloze_rendered" style="display:none;">{{cloze:Text}}</div>
+<div id="hidden_raw" style="display:none;">{{Text}}</div>
+<div id="content_display"></div>
+
+<script>
+    (function () {
+        var raw = document.getElementById("hidden_raw").innerHTML;
+        var rendered = document.getElementById("cloze_rendered").innerHTML;
+        var clozePattern = /\{\{c(\d+)::([\s\S]*?)\}\}/g;
+
+        function uniqueIndices(text) {
+            var seen = {};
+            var indices = [];
+            var match;
+            var idxRegex = /\{\{c(\d+)::/g;
+            while ((match = idxRegex.exec(text)) !== null) {
+                var idx = match[1];
+                if (!seen[idx]) {
+                    seen[idx] = true;
+                    indices.push(idx);
+                }
+            }
+            return indices;
+        }
+
+        function parseInner(inner) {
+            var hintPos = inner.indexOf("::");
+            if (hintPos === -1) {
+                return { content: inner, hint: "" };
+            }
+            return {
+                content: inner.slice(0, hintPos),
+                hint: inner.slice(hintPos + 2)
+            };
+        }
+
+        function hasClass(node, className) {
+            var classes = " " + (node.className || "") + " ";
+            return classes.indexOf(" " + className + " ") !== -1;
+        }
+
+        function activeOrdinalFromRendered(html, indices) {
+            var root = document.createElement("div");
+            root.innerHTML = html;
+            var els = root.querySelectorAll(".cloze[data-ordinal]");
+            for (var elIdx = 0; elIdx < els.length; elIdx++) {
+                var el = els[elIdx];
+                var ordinal = el.getAttribute("data-ordinal");
+                if (!hasClass(el, "cloze-inactive") && indices.indexOf(ordinal) !== -1) {
+                    return ordinal;
+                }
+            }
+            return "";
+        }
+
+        function normalizeSignature(html) {
+            var root = document.createElement("div");
+            root.innerHTML = html;
+
+            function walk(node, inCloze) {
+                if (node.nodeType === 3) {
+                    return node.nodeValue;
+                }
+                if (node.nodeType !== 1) {
+                    return "";
+                }
+
+                if (node.tagName === "BR") {
+                    return "\n";
+                }
+
+                var isActiveCloze =
+                    hasClass(node, "cloze") && !hasClass(node, "cloze-inactive");
+                var nextInCloze = inCloze || isActiveCloze;
+                var out = "";
+                for (var childIdx = 0; childIdx < node.childNodes.length; childIdx++) {
+                    out += walk(node.childNodes[childIdx], nextInCloze);
+                }
+
+                if (!inCloze && isActiveCloze) {
+                    return "[[CLOZE]]" + out + "[[/CLOZE]]";
+                }
+                return out;
+            }
+
+            var txt = "";
+            for (var rootIdx = 0; rootIdx < root.childNodes.length; rootIdx++) {
+                txt += walk(root.childNodes[rootIdx], false);
+            }
+            return txt.replace(/\s+/g, " ").trim();
+        }
+
+        function simulateFront(text, activeIdx) {
+            return text.replace(clozePattern, function (match, idx, inner) {
+                var parsed = parseInner(inner);
+                if (idx === activeIdx) {
+                    var display = parsed.hint ? "[" + parsed.hint + "]" : "[...]";
+                    return "<span class='cloze'>" + display + "</span>";
+                }
+                return parsed.content;
+            });
+        }
+
+        function detectActiveIndex(indices) {
+            if (!indices.length) {
+                return "1";
+            }
+
+            // Prefer Anki's active cloze ordinal when desktop provides it.
+            var renderedOrdinal = activeOrdinalFromRendered(rendered, indices);
+            if (renderedOrdinal) {
+                return renderedOrdinal;
+            }
+
+            var renderedSig = normalizeSignature(rendered);
+            for (var idxPos = 0; idxPos < indices.length; idxPos++) {
+                var idx = indices[idxPos];
+                var simulatedSig = normalizeSignature(simulateFront(raw, idx));
+                if (simulatedSig === renderedSig) {
+                    return idx;
+                }
+            }
+
+            // Fallback for contexts where the rendered cloze field is unavailable.
+            // Desktop cardN can be the template ordinal, not the cloze index.
+            var classMatch = (document.body.className || "").match(/\bcard(\d+)\b/);
+            if (classMatch && indices.indexOf(classMatch[1]) !== -1) {
+                return classMatch[1];
+            }
+
+            return indices[0];
+        }
+
+        var clozeIndices = uniqueIndices(raw);
+        var activeIdx = detectActiveIndex(clozeIndices);
+
+        // Render with detected active index
+        var result = raw.replace(clozePattern, function (match, idx, inner) {
+            var parsed = parseInner(inner);
+            if (idx === activeIdx) {
+                var displayTxt = parsed.hint ? "[" + parsed.hint + "]" : "[...]";
+                return "<span class='cloze'>" + displayTxt + "</span>";
+            }
+            return "<span class='inactive-cloze' aria-label='hidden cloze'></span>";
+        });
+
+        document.getElementById("content_display").innerHTML = result;
+    })();
+</script>
