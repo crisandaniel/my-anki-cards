@@ -5,8 +5,11 @@ export ANKIOPS_COLLECTION_ROOT
 
 $(info Collection root: ${ANKIOPS_COLLECTION_ROOT})
 
-fa:
+.ankiops.db:
+	ankiops init
+
+fa: .ankiops.db
 	ankiops files-to-anki
 
-af: 
+af: .ankiops.db
 	ankiops anki-to-files

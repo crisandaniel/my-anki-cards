@@ -6,6 +6,3 @@
 llm/.*db
 llm/.*db-*
 
-# ignore dev__ because they are symlinks from homelab_learning
-dev__*.md
-homelab__*.md
