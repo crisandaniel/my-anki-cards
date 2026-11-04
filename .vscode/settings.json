@@ -1,0 +1,16 @@
+{
+    "git.repositoryScanMaxDepth": 3,
+    "[markdown]": {
+        "editor.formatOnSave": false,
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.wordWrapColumn": 80,
+        "editor.stickyScroll.enabled": false,
+        "diffEditor.ignoreTrimWhitespace": true
+    },
+    "markdown.preview.breaks": true,
+    "markdown.preview.doubleClickToSwitchToEditor": true,
+    "markdown.preview.markEditorSelection": true,
+    "markdown.copyFiles.destination": {
+        "**/*.md": "media/"
+    }
+}

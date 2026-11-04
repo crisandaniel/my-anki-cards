@@ -1,0 +1,18 @@
+model: gpt-5.4-mini
+system_prompt: !file _system_prompt.md
+user_prompt: |
+  Translate the following text from English to German.
+  Preserve meaning, Markdown structure, cloze syntax, code fences, math, and URLs.
+  Do not add facts or change correctness.
+
+fields:
+  default_access: editable
+  hidden:
+    "*": ["AI Notes"]
+  read_only:
+    "AnkiOpsChoice": ["Answer"]
+
+tags: editable
+
+request:
+  max_notes_per_request: 3
