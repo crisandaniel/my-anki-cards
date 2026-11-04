@@ -1,0 +1,30 @@
+styling:
+  - ../AnkiOpsStyling.css
+  - ./DividerStyling.css
+  - ../SyntaxHighlighting.css
+templates:
+  - name: Card 1
+    front: Front.template.anki
+    back: Back.template.anki
+  - name: Card 2
+    front: Front2.template.anki
+    back: Back2.template.anki
+fields:
+  - name: Front
+    label: "F:"
+    identifying: true
+  - name: Back
+    label: "B:"
+    identifying: true
+  - name: Divider
+    label: "D:"
+    identifying: false
+  - name: Extra
+    label: "E:"
+    identifying: false
+  - name: More
+    label: "M:"
+    identifying: false
+  - name: AI Notes
+    label: "AI:"
+    identifying: false
