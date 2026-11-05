@@ -1,161 +1,219 @@
-<!-- note_key: f703e0961fb9 -->
-<!-- note_type: AnkiOpsQA -->
-Q: What does the "use strict" directive do in JavaScript and why is it recommended?
-A: Enabled at the beginning of a script or function, strict mode disables legacy permissive behaviors (such as automatic creation of undeclared global variables or silent failures on assignment) and forces cleaner, safer code.
+Q: What is the purpose of the `"use strict"` directive in JavaScript and what risk does omitting it introduce?
+A: `"use strict"` forces the engine into modern ES5+ mode, disabling legacy permissive behaviors. Without it, misspelled variable assignments (e.g., `usrRole = "Admin"`) create unintended global variables on `window`/`globalThis`, polluting global memory and causing subtle state-overwriting bugs.
+
+```js
+"use strict";
+// Assigning undeclared variables throws ReferenceError instead of creating globals
+// usrRole = "Admin"; // ReferenceError
+```
 
 ---
 
-<!-- note_key: 1d99c71c78ef -->
-<!-- note_type: AnkiOpsQA -->
-Q: What is Automatic Semicolon Insertion (ASI) and why is relying on it risky?
-A: ASI is the mechanism by which the JS engine automatically inserts semicolons `;` at line breaks. Relying on it is risky because in certain edge cases (e.g., lines starting with `[` or `(`) ASI can fail, causing unexpected runtime errors.
+Q: What are the best practices for choosing between `const`, `let`, and `var`?
+A: Use `const` by default for bindings that won't be reassigned. Use `let` only when variable re-assignment is required (e.g., loop counters) within a block scope (`{}`). Completely avoid `var` due to scope leakage and `undefined` hoisting bugs.
+
+```js
+const API_URL = "https://api.example.com"; // Fixed binding
+let attempts = 0; // Re-assignable
+attempts++;
+```
 
 ---
 
-<!-- note_key: 53b8d6346b35 -->
-<!-- note_type: AnkiOpsQA -->
-Q: What is the difference in scope and hoisting between `let`/`const` and `var`?
-A: `let` and `const` have block scope (`{}`) and reside in the Temporal Dead Zone (TDZ), meaning they cannot be accessed before declaration. `var` has function/global scope, is hoisted without TDZ, and is implicitly initialized with `undefined`.
+Q: What are the main production risks of using `var` instead of `let`/`const`?
+A: 1. **No Block Scope:** `var` leaks outside `if`/`for` blocks, potentially overwriting outer variables.
+2. **Unsafe Hoisting:** Accessing a `var` before declaration yields `undefined` instead of throwing a `ReferenceError`.
+3. **Re-declaration:** `var` allows silent re-declarations without throwing syntax errors.
+
+```js
+if (true) {
+  var leaked = "I leak outside block scope!";
+}
+console.log(leaked); // Accessible outside!
+```
 
 ---
 
-<!-- note_key: fa30801132bb -->
-<!-- note_type: AnkiOpsQA -->
-Q: What does the `const` keyword guarantee in JavaScript?
-A: `const` guarantees that the variable reference cannot be reassigned. It does not guarantee immutability of object or array contents, which can still be mutated internally.
+Q: Why is explicit type conversion preferred over implicit type coercion in JS?
+A: Explicit conversion (`Number()`, `String()`, `Boolean()`) makes intent clear and self-documented. Implicit coercion is prone to calculation bugs—for example, the `+` operator favors string concatenation when one operand is a string, whereas `-` forces numeric conversion.
+
+```js
+const concatResult = "10" + 2; // "102" (string concatenation)
+const mathResult = "10" - 2;   // 8 (numeric subtraction)
+const explicitNum = Number("10") + 2; // 12 (safe)
+```
 
 ---
 
-<!-- note_key: 9e5d54b006a1 -->
-<!-- note_type: AnkiOpsQA -->
-Q: What are the 8 data types in JavaScript?
-A: 7 primitives: `number`, `string`, `boolean`, `null`, `undefined`, `symbol`, `bigint`, and 1 complex type: `object`.
+Q: Why should strict equality (`===`) always be used instead of loose equality (`==`)?
+A: Strict equality (`===`) checks both data type and value without performing type coercion. Loose equality (`==`) attempts implicit type conversions, leading to unexpected truths like `"0" == false`, `"" == 0`, or `[] == false`, which can compromise input validation and security checks.
+
+```js
+const input = "0";
+console.log(input === 0); // false (Safe)
+console.log(input == 0);  // true (Risky coercion)
+```
 
 ---
 
-<!-- note_key: 69ba9bf29826 -->
-<!-- note_type: AnkiOpsQA -->
-Q: What is the historical anomaly of the `typeof` operator regarding `null`?
-A: `typeof null` returns `"object"`, even though `null` is a separate primitive type. This is a legacy bug preserved for backward compatibility.
+Q: When should you use Nullish Coalescing (`??`) instead of logical OR (`||`)?
+A: Use `||` when you want any *falsy* value (`0`, `""`, `false`, `null`, `undefined`, `NaN`) to trigger the fallback default. Use `??` when `0`, `""`, or `false` are considered valid business data, as `??` only falls back for `null` and `undefined`.
+
+```js
+const settings = { volume: 0 };
+const volBad = settings.volume || 50;  // 50 (Incorrect: 0 was overwritten)
+const volGood = settings.volume ?? 50; // 0 (Correct: 0 preserved)
+```
 
 ---
 
-<!-- note_key: 557b8a61a340 -->
-<!-- note_type: AnkiOpsQA -->
-Q: How does the Nullish Coalescing operator (`??`) differ from the logical OR operator (`||`)?
-A: The `||` operator treats all *falsy* values (`0`, `""`, `false`, `null`, `undefined`, `NaN`) as missing values, whereas `??` treats only *nullish* values (`null` and `undefined`) as missing values.
+Q: What risk does the `fall-through` behavior in a `switch` statement pose?
+A: Omitting a `break` statement in a `switch` case causes execution to immediately fall through to subsequent cases regardless of whether their condition matches, executing unwanted code blocks.
+
+```js
+const role = "ADMIN";
+switch (role) {
+  case "ADMIN":
+    console.log("Admin Access");
+    // Missing `break;` will cause "User Access" to print too!
+  case "USER":
+    console.log("User Access");
+}
+```
 
 ---
 
-<!-- note_key: 414f95ab7832 -->
-<!-- note_type: AnkiOpsQA -->
-Q: What is the difference between prefix (`++x`) and postfix (`x++`) increment operators?
-A: Prefix (`++x`) increments the value and returns the new value. Postfix (`x++`) increments the value but returns the old value (prior to incrementation).
+Q: What happens if an infinite loop occurs in a single-threaded JavaScript environment?
+A: Because JS runs on a single main thread (Event Loop), an infinite loop completely blocks the Event Loop. The page freezes, UI interactions stop working, and the browser throws a "Page Unresponsive" prompt.
+
+```js
+// Dangerous: Missing break condition
+// while (true) { /* blocks Event Loop */ }
+```
 
 ---
 
-<!-- note_key: fadef6319664 -->
-<!-- note_type: AnkiOpsQA -->
-Q: How do Function Declarations differ from Function Expressions regarding hoisting?
-A: Function Declarations are processed during the compilation phase (fully hoisted) and can be called before their definition line. Function Expressions are created dynamically only when execution reaches that line.
+Q: Why shouldn't Arrow Functions (`() => {}`) be used as object methods or constructors?
+A: Arrow functions do not have their own `this` binding (they inherit `this` lexically from the outer scope) and lack `.prototype` / `[[Construct]]` internal slots. Using them as methods causes `this` to point to the outer/global object (`undefined` or `window`), and using `new` with them throws a `TypeError`.
+
+```js
+const user = {
+  name: "Alex",
+  getNameBad: () => this.name, // undefined (inherits outer `this`)
+  getNameGood() { return this.name; } // "Alex"
+};
+```
 
 ---
 
-<!-- note_key: 6426f056357c -->
-<!-- note_type: AnkiOpsQA -->
-Q: Why is `null >= 0` evaluated as `true`, but `null == 0` as `false`?
-A: Relational operators (`>=`) convert `null` to the number `0` (resulting in `0 >= 0` -> `true`). Loose equality (`==`) follows a special rule where `null` equals only `undefined` and does not convert to a number.
+Q: Why is `null >= 0` evaluated as `true`, while `null == 0` evaluates as `false`?
+A: Relational operators (`>=`, `>`, `<`) convert `null` to the number `0` (evaluating `0 >= 0` -> `true`). Loose equality (`==`) follows a distinct ECMAScript specification rule where `null` only loosely equals `undefined` and undergoes no numeric coercion.
+
+```js
+console.log(null > 0);  // false
+console.log(null == 0); // false
+console.log(null >= 0); // true
+```
 
 ---
 
-<!-- note_key: d0cc7b50f94a -->
-<!-- note_type: AnkiOpsQA -->
-Q: What is the result of `Number(null)` compared to `Number(undefined)`?
-A: `Number(null)` returns `0` (explicit absence of value), while `Number(undefined)` returns `NaN` (uninitialized/unknown value).
+Q: What is the difference in numeric conversion between `null` and `undefined`?
+A: `null` represents explicit absence of value and converts to `0`. `undefined` represents an uninitialized or unknown state and converts to `NaN`. Any mathematical operation on `NaN` propagates `NaN`.
+
+```js
+console.log(Number(null));      // 0
+console.log(Number(undefined)); // NaN
+console.log(null + 5);          // 5
+console.log(undefined + 5);     // NaN
+```
 
 ---
 
-<!-- note_key: 87099991cba2 -->
-<!-- note_type: AnkiOpsQA -->
-Q: Why is `Boolean("0")` `true`, but `"0" == false` is also `true`?
-A: `Boolean("0")` is `true` because any non-empty string is *truthy*. On the other hand, `"0" == false` applies numeric coercion to both operands (`0 == 0`), which evaluates to `true`.
+Q: How does Automatic Semicolon Insertion (ASI) create bugs with multiline `return` statements?
+A: ASI automatically inserts a semicolon `;` immediately after `return` if a line break follows. This causes the function to execute `return;` (returning `undefined`) and ignore any object or expression placed on the next line.
+
+```js
+function getUser() {
+  return
+  {
+    name: "Alex"
+  };
+}
+console.log(getUser()); // undefined!
+```
 
 ---
 
-<!-- note_key: 7336f29e8d48 -->
-<!-- note_type: AnkiOpsQA -->
-Q: What issue does ASI cause when a `return` statement is followed by a new line?
-A: ASI automatically inserts a semicolon `;` immediately after `return`, making the function return `undefined` and ignoring the code/object on the next line.
+Q: Why is `NaN === NaN` evaluated as `false` and how should `NaN` be accurately checked?
+A: According to the IEEE 754 standard, `NaN` (Not-a-Number) represents an undefined numeric result and is never equal to any value, including itself. To safely check for `NaN`, use `Number.isNaN(val)` or `Object.is(val, NaN)`.
+
+```js
+console.log(NaN === NaN);       // false
+console.log(Number.isNaN(NaN)); // true
+```
 
 ---
 
-<!-- note_key: b074227f48a5 -->
-<!-- note_type: AnkiOpsQA -->
-Q: How does `NaN` behave in equality comparisons (`NaN === NaN`) and how should it be checked?
-A: `NaN === NaN` evaluates to `false` (it is the only JS value not equal to itself). To check for `NaN`, use `Number.isNaN(val)` or `Object.is(val, NaN)`.
+Q: How do `let`/`const` behave regarding scope, hoisting, and the Temporal Dead Zone (TDZ)?
+A: `let` and `const` are block-scoped (`{}`). Although their declarations are hoisted during compilation, they remain uninitialized in the TDZ (from block entry until the actual declaration line). Accessing them inside the TDZ throws a `ReferenceError`.
+
+```js
+{
+  // console.log(a); // ReferenceError: Cannot access 'a' before initialization
+  let a = 10;
+  console.log(b); // undefined (var is hoisted and auto-initialized)
+  var b = 20;
+}
+```
 
 ---
 
-<!-- note_key: 45aa3892ee13 -->
-<!-- note_type: AnkiOpsQA -->
-Q: Why does the expression `1 && 2 ?? 3` throw a SyntaxError?
-A: The JavaScript specification explicitly forbids combining `&&` or `||` directly with `??` without explicit parentheses (`(1 && 2) ?? 3`) to prevent priority ambiguity.
+Q: How does short-circuit evaluation work for `||` and `&&` operators?
+A: Logical operators evaluate left-to-right and return the actual value of the last evaluated operand, not a Boolean:
+- `A || B`: Evaluates `A`. If `A` is *truthy*, returns `A`; otherwise evaluates and returns `B`.
+- `A && B`: Evaluates `A`. If `A` is *falsy*, returns `A`; otherwise evaluates and returns `B`.
+
+```js
+console.log("Alex" || "User"); // "Alex"
+console.log("" || "User");     // "User"
+console.log(0 && "User");      // 0
+console.log(1 && "User");      // "User"
+```
 
 ---
 
-<!-- note_key: 4174ba39f6a2 -->
-<!-- note_type: AnkiOpsQA -->
-Q: What is the result of the comparison `"2" > "12"` and why?
-A: It returns `true` because when both operands are strings, the comparison is done lexicographically (character by character based on Unicode values), and `'2'` is greater than `'1'`.
+Q: What are the step-by-step coercion rules for the Abstract Equality Comparison algorithm (`==`)?
+A: 1. If types match, perform strict comparison (`===`).
+2. `null == undefined` returns `true`.
+3. If comparing a `number` and a `string`, convert the string to a `number`.
+4. If one operand is a `boolean`, convert it to a `number` (`true` -> 1, `false` -> 0).
+5. If comparing an `object` to a primitive, convert the object via `valueOf()` or `toString()`.
+
+```js
+console.log("0" == false); // true ("0" -> 0, false -> 0, 0 == 0)
+```
 
 ---
 
-<!-- note_key: c6441d98f625 -->
-<!-- note_type: AnkiOpsQA -->
-Q: What is the step-by-step algorithm for Abstract Equality Comparison (`==`)?
-A: 1. If types match, compare values strictly.
-2. `null == undefined` evaluates to `true`.
-3. If comparing `number` and `string`, convert the string to a `number`.
-4. If one operand is `boolean`, convert it to a `number` (`true` -> 1, `false` -> 0).
-5. If comparing an `object` with a primitive, convert the object to a primitive via `valueOf()` / `toString()`.
-
----
-
-<!-- note_key: 501efea7665b -->
-<!-- note_type: AnkiOpsQA -->
-Q: What is the Temporal Dead Zone (TDZ)?
-A: TDZ is the time frame between entering a block scope and the exact line where a `let` or `const` variable is declared and initialized. Accessing the variable during this window throws a `ReferenceError`.
-
----
-
-<!-- note_key: 19b413c39c86 -->
-<!-- note_type: AnkiOpsQA -->
-Q: Why can't Arrow Functions be used as object methods or constructor functions?
-A: 1. They lack their own `this` binding (they inherit `this` lexically from the outer scope).
-2. They lack internal `[[Construct]]` and `.prototype` properties (cannot be called with `new`).
-3. They do not bind an `arguments` object.
-
----
-
-<!-- note_key: 4e21b5d67d38 -->
-<!-- note_type: AnkiOpsQA -->
-Q: How does short-circuit evaluation work for `A || B` and `A && B`?
-A: Logical operators return the value of the last evaluated operand:
-- `A || B`: If `A` is *truthy*, returns `A`; otherwise evaluates and returns `B`.
-- `A && B`: If `A` is *falsy*, returns `A`; otherwise evaluates and returns `B`.
-
----
-
-<!-- note_key: 199661db8652 -->
-<!-- note_type: AnkiOpsQA -->
 Q: What are the 6 *falsy* values in JavaScript?
 A: `false`, `0`, `""` (empty string), `null`, `undefined`, and `NaN`.
 
+```js
+// All evaluate to false in boolean contexts:
+console.log(Boolean(0));        // false
+console.log(Boolean(""));       // false
+console.log(Boolean(null));     // false
+```
+
 ---
 
-<!-- note_key: ab8d003b1a7c -->
-<!-- note_type: AnkiOpsQA -->
-Q: How can you perform fast explicit type conversions to Number, Boolean, and Integer in JS?
+Q: What are the quick explicit syntax patterns for casting values to Number, Boolean, and Integer in JS?
 A: - To Number: `+val` or `Number(val)`
 - To Boolean: `!!val` or `Boolean(val)`
-- To Integer parsing: `parseInt(val, 10)`
+- To Integer parsing: `parseInt(val, 10)` (always pass radix 10)
+
+```js
+const num = +"42";          // 42 (number)
+const bool = !!"text";      // true (boolean)
+const intVal = parseInt("42px", 10); // 42 (number)
+```
